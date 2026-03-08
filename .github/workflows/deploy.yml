@@ -49,12 +49,17 @@ jobs:
           aws cloudfront update-function \
             --name basic-auth \
             --function-code fileb://cloudfront-auth.js \
-            --function-config Comment="Basic Auth",Runtime="cloudfront-js-2.0"
+            --function-config Comment="Basic Auth",Runtime="cloudfront-js-2.0" \
+            --if-match $(aws cloudfront describe-function \
+              --name basic-auth \
+              --stage DEVELOPMENT \
+              --query 'ETag' --output text)
 
           aws cloudfront publish-function \
             --name basic-auth \
             --if-match $(aws cloudfront describe-function \
               --name basic-auth \
+              --stage LIVE \
               --query 'ETag' --output text)
 
       - name: Invalidate CloudFront cache
