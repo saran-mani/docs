@@ -47,18 +47,18 @@ jobs:
           sed -i 's|BASIC_AUTH_PLACEHOLDER|${{ secrets.BASIC_AUTH_STRING_PROD }}|g' cloudfront-auth.js
 
           aws cloudfront update-function \
-            --name basic-auth \
+            --name saran-docs \
             --function-code fileb://cloudfront-auth.js \
             --function-config Comment="Basic Auth",Runtime="cloudfront-js-2.0" \
             --if-match $(aws cloudfront describe-function \
-              --name basic-auth \
+              --name saran-docs \
               --stage DEVELOPMENT \
               --query 'ETag' --output text)
 
           aws cloudfront publish-function \
-            --name basic-auth \
+            --name saran-docs \
             --if-match $(aws cloudfront describe-function \
-              --name basic-auth \
+              --name saran-docs \
               --stage LIVE \
               --query 'ETag' --output text)
 
