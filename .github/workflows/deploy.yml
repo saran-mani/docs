@@ -46,21 +46,38 @@ jobs:
         run: |
           sed -i 's|BASIC_AUTH_PLACEHOLDER|${{ secrets.BASIC_AUTH_STRING_PROD }}|g' cloudfront-auth.js
 
-          aws cloudfront update-function \
+          # check if function exists
+          ETAG=$(aws cloudfront describe-function \
             --name saran-docs \
-            --function-code fileb://cloudfront-auth.js \
-            --function-config Comment="Basic Auth",Runtime="cloudfront-js-2.0" \
-            --if-match $(aws cloudfront describe-function \
+            --stage DEVELOPMENT \
+            --query 'ETag' --output text 2>/dev/null)
+
+          if [ -z "$ETAG" ]; then
+            echo "Function not found, creating..."
+            aws cloudfront create-function \
               --name saran-docs \
-              --stage DEVELOPMENT \
-              --query 'ETag' --output text)
+              --function-code fileb://cloudfront-auth.js \
+              --function-config Comment="Basic Auth",Runtime="cloudfront-js-2.0"
+          else
+            echo "Function exists, updating..."
+            aws cloudfront update-function \
+              --name saran-docs \
+              --function-code fileb://cloudfront-auth.js \
+              --function-config Comment="Basic Auth",Runtime="cloudfront-js-2.0" \
+              --if-match $ETAG
+          fi
+
+          # fetch fresh ETag after update
+          FRESH_ETAG=$(aws cloudfront describe-function \
+            --name saran-docs \
+            --stage DEVELOPMENT \
+            --query 'ETag' --output text)
+
+          echo "Publishing with ETag: $FRESH_ETAG"
 
           aws cloudfront publish-function \
             --name saran-docs \
-            --if-match $(aws cloudfront describe-function \
-              --name saran-docs \
-              --stage LIVE \
-              --query 'ETag' --output text)
+            --if-match $FRESH_ETAG
 
       - name: Invalidate CloudFront cache
         run: |
