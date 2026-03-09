@@ -20,6 +20,11 @@ const sidebars: SidebarsConfig = {
       label: 'oLo',
       items: ['oLo/data-flow'],
     },
+    {
+      type: 'category',
+      label: 'Maskwa',
+      items: ['maskwa/spec','maskwa/accounts'],
+    },
 
     'operations/change-log',
   ],
